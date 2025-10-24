@@ -47,7 +47,7 @@ class ScannerListener:
         ecodes.KEY_DOT: '>', ecodes.KEY_SLASH: '?', ecodes.KEY_SPACE: ' ',
     }
 
-    def __init__(self, relay_pin: int = 17, relay_duration: float = 30.0) -> None:
+    def __init__(self, relay_pin: int = 17, relay_duration: float = 1.0) -> None:
         """Inicializa el servicio de escucha y configura el GPIO."""
         self.is_running: bool = False
         self.relay_pin = relay_pin
@@ -59,7 +59,7 @@ class ScannerListener:
         # Configurar GPIO
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.relay_pin, GPIO.OUT)
-        GPIO.output(self.relay_pin, GPIO.LOW)
+        GPIO.output(self.relay_pin, GPIO.HIGH)
 
     @staticmethod
     def find_scanner_devices() -> List[evdev.InputDevice]:
@@ -211,12 +211,12 @@ class ScannerListener:
         with self.lock:  # Sincronizar acceso al relé entre múltiples threads
             try:
                 print(f"🔌 Activando relé en GPIO {self.relay_pin} (trigger desde {device_name})...")
-                GPIO.output(self.relay_pin, GPIO.HIGH)
+                GPIO.output(self.relay_pin, GPIO.LOW)
                 print(f"✅ Relé ON - Manteniéndose por {self.relay_duration} segundos")
                 
                 time.sleep(self.relay_duration)
                 
-                GPIO.output(self.relay_pin, GPIO.LOW)
+                GPIO.output(self.relay_pin, GPIO.HIGH)
                 print("🔌 Relé OFF\n")
             except Exception as e:
                 print(f"❌ Error al activar el relé: {e}\n")
