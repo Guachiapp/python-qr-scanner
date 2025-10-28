@@ -47,7 +47,7 @@ class ScannerListener:
         ecodes.KEY_DOT: '>', ecodes.KEY_SLASH: '?', ecodes.KEY_SPACE: ' ',
     }
 
-    def __init__(self, relay_pin: int = 17, relay_duration: float = 1.0) -> None:
+    def __init__(self, relay_pin: int = 17, relay_duration: float = 3.0) -> None:
         """Inicializa el servicio de escucha y configura el GPIO."""
         self.is_running: bool = False
         self.relay_pin = relay_pin
@@ -71,6 +71,7 @@ class ScannerListener:
             
             for device in devices:
                 device_name = device.name.upper()
+                print(f"device_name: {device_name}")
                 # Buscar dispositivos que contengan palabras clave de scanners
                 if any(keyword in device_name for keyword in ['SCAN', 'BARCODE', 'QR', 'READER']):
                     scanner_devices.append(device)
@@ -172,7 +173,7 @@ class ScannerListener:
         # Solo procesar cuando la tecla es presionada (keystate = 1)
         if keystate != 1:
             return
-
+        print(f"keycode: {keycode}")
         if keycode == 'KEY_ENTER':
             if state['current_code']:
                 self._process_qr_data(state['current_code'], device_name)
