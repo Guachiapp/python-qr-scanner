@@ -176,7 +176,17 @@ class ScannerListener:
         print(f"keycode: {keycode}")
         if keycode == 'KEY_ENTER':
             if state['current_code']:
-                self._process_qr_data(state['current_code'], device_name)
+                if not self._is_processing:  # bandera para evitar procesamiento concurrente
+                    self._is_processing = True
+                    data = state['current_code']
+                    thread = threading.Thread(
+                        target=self._process_qr_data_threadsafe,
+                        args=(data, device_name),
+                        daemon=True
+                    )
+                    thread.start()
+                else:
+                    print("⚠️ Escaneo ignorado: proceso anterior aún en curso.")
                 state['current_code'] = ""
         else:
             key_value = getattr(ecodes, keycode, None)
@@ -185,6 +195,12 @@ class ScannerListener:
                 key_map = self.SHIFT_KEY_MAP if state['shift_pressed'] else self.KEY_MAP
                 if key_value in key_map:
                     state['current_code'] += key_map[key_value]
+
+    def _process_qr_data_threadsafe(self, data: str, device_name: str):
+        try:
+            self._process_qr_data(data, device_name)
+        finally:
+            self._is_processing = False
 
     def _process_qr_data(self, data: str, device_name: str) -> None:
         """Procesa y muestra los datos del código QR escaneado."""
