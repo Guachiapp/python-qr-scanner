@@ -50,6 +50,7 @@ class ScannerListener:
     def __init__(self, relay_pin: int = 17, relay_duration: float = 3.0) -> None:
         """Inicializa el servicio de escucha y configura el GPIO."""
         self.is_running: bool = False
+        self._is_processing = False
         self.relay_pin = relay_pin
         self.relay_duration = relay_duration
         self.threads: List[threading.Thread] = []
