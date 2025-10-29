@@ -72,14 +72,9 @@ class ScannerListener:
 
             for device in devices:
                 device_name = device.name.upper()
-                print(f"device_name: {device_name}")
                 # Buscar dispositivos que contengan palabras clave de scanners
                 if any(keyword in device_name for keyword in ['SCAN', 'BARCODE', 'QR', 'READER']):
                     scanner_devices.append(device)
-                    print(f"🔍 Scanner detectado: {device.name} ({device.path})")
-
-            if scanner_devices:
-                print(f"✅ Total de scanners detectados: {len(scanner_devices)}\n")
 
         except Exception as e:
             print(f"❌ Error al buscar dispositivos: {e}")
@@ -134,29 +129,42 @@ class ScannerListener:
             print(f"🚀 Thread iniciado para: {device.name} ({device.path})")
 
     def _monitor_devices(self, interval: float = 5.0) -> None:
+        """Monitorea continuamente los dispositivos conectados y actualiza listeners dinámicamente."""
+        previous_paths = set()
+
         while self.is_running:
             try:
-                current_paths = set(d.path for d in self.find_scanner_devices())
+                current_devices = [d for d in self.find_scanner_devices()]
+                current_paths = set(device.path for device in current_devices)
+
                 with self.lock:
                     known_paths = set(self.device_states.keys())
 
                     # Nuevos dispositivos
-                    for path in current_paths - known_paths:
-                        try:
-                            device = evdev.InputDevice(path)
+                    new_paths = current_paths - known_paths
+                    for device in current_devices:
+                        if device.path in new_paths:
+                            device_name = device.name.upper()
+                            print(f"device_name: {device_name}")
+                            print(f"🔍 Scanner detectado: {device.name} ({device.path})")
                             self._start_device_thread(device)
-                            print(f"🆕 Scanner conectado: {device.name} ({path})")
-                        except Exception as e:
-                            print(f"❌ Error al iniciar nuevo scanner {path}: {e}")
+                            print(f"🆕 Scanner conectado: {device.name} ({device.path})")
 
                     # Dispositivos desconectados
-                    for path in known_paths - current_paths:
+                    removed_paths = known_paths - current_paths
+                    for path in removed_paths:
                         print(f"🔌 Scanner desconectado: {path}")
                         self.device_states.pop(path, None)
-                        # Opcional: podrías marcar el thread como terminado si lo gestionas por path
+
+                # Solo imprimir resumen si hubo cambios
+                if current_paths != previous_paths:
+                    print(f"✅ Total de scanners detectados: {len(current_paths)}\n")
+                    previous_paths = current_paths
 
             except Exception as e:
                 print(f"❌ Error en monitor de dispositivos: {e}")
+
+            time.sleep(interval)
 
     def _listen_device(self, device: evdev.InputDevice) -> None:
         """Escucha eventos de un dispositivo específico en su propio thread."""
