@@ -66,10 +66,10 @@ class ScannerListener:
     def find_scanner_devices() -> List[evdev.InputDevice]:
         """Detecta automáticamente todos los dispositivos scanner conectados por USB."""
         scanner_devices = []
-        
+
         try:
             devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-            
+
             for device in devices:
                 device_name = device.name.upper()
                 print(f"device_name: {device_name}")
@@ -77,62 +77,86 @@ class ScannerListener:
                 if any(keyword in device_name for keyword in ['SCAN', 'BARCODE', 'QR', 'READER']):
                     scanner_devices.append(device)
                     print(f"🔍 Scanner detectado: {device.name} ({device.path})")
-            
-            if not scanner_devices:
-                print("⚠️  No se detectaron scanners conectados")
-            else:
+
+            if scanner_devices:
                 print(f"✅ Total de scanners detectados: {len(scanner_devices)}\n")
-                
+
         except Exception as e:
             print(f"❌ Error al buscar dispositivos: {e}")
-        
+
         return scanner_devices
 
     def start(self) -> NoReturn:
-        """Inicia el bucle de escucha de todos los scanners detectados."""
         self.is_running = True
-        print("🔍 Servicio de escucha de scanners QR iniciado")
+        print("🟢 Servicio iniciado. Esperando scanners...")
         print(f"⚡ GPIO configurado en pin: {self.relay_pin}")
         print("⚠️  Presiona Ctrl+C para detener el servicio\n")
-        
-        # Detectar todos los scanners
+
         scanner_devices = self.find_scanner_devices()
-        
+
         if not scanner_devices:
-            print("❌ No hay scanners disponibles para escuchar")
-            self._shutdown()
-            return
-        
+            print("⚠️ No hay scanners disponibles al inicio. Esperando conexiones...")
+
         try:
-            # Crear un thread para cada scanner
             for device in scanner_devices:
-                # Inicializar el estado de cada dispositivo
-                self.device_states[device.path] = {
-                    'current_code': '',
-                    'shift_pressed': False
-                }
-                
-                thread = threading.Thread(
-                    target=self._listen_device,
-                    args=(device,),
-                    daemon=True,
-                    name=f"Scanner-{device.path}"
-                )
-                thread.start()
-                self.threads.append(thread)
-                print(f"🚀 Thread iniciado para: {device.name}")
-            
-            print(f"\n✅ Escuchando {len(scanner_devices)} scanner(s) simultáneamente...\n")
-            
-            # Mantener el programa corriendo
+                self._start_device_thread(device)
+
+            monitor_thread = threading.Thread(target=self._monitor_devices, daemon=True)
+            monitor_thread.start()
+
             while self.is_running:
                 time.sleep(1)
-                
+
         except KeyboardInterrupt:
             self._shutdown()
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"❌ Error general: {e}")
             self._shutdown()
+
+    def _start_device_thread(self, device: evdev.InputDevice) -> None:
+        with self.lock:
+            if device.path in self.device_states:
+                return  # Ya está registrado
+
+            self.device_states[device.path] = {
+                'current_code': '',
+                'shift_pressed': False
+            }
+
+            thread = threading.Thread(
+                target=self._listen_device,
+                args=(device,),
+                daemon=True,
+                name=f"Scanner-{device.path}"
+            )
+            thread.start()
+            self.threads.append(thread)
+            print(f"🚀 Thread iniciado para: {device.name} ({device.path})")
+
+    def _monitor_devices(self, interval: float = 5.0) -> None:
+        while self.is_running:
+            try:
+                current_paths = set(d.path for d in self.find_scanner_devices())
+                with self.lock:
+                    known_paths = set(self.device_states.keys())
+
+                    # Nuevos dispositivos
+                    for path in current_paths - known_paths:
+                        try:
+                            device = evdev.InputDevice(path)
+                            self._start_device_thread(device)
+                            print(f"🆕 Scanner conectado: {device.name} ({path})")
+                        except Exception as e:
+                            print(f"❌ Error al iniciar nuevo scanner {path}: {e}")
+
+                    # Dispositivos desconectados
+                    for path in known_paths - current_paths:
+                        print(f"🔌 Scanner desconectado: {path}")
+                        self.device_states.pop(path, None)
+                        # Opcional: podrías marcar el thread como terminado si lo gestionas por path
+
+            except Exception as e:
+                print(f"❌ Error en monitor de dispositivos: {e}")
 
     def _listen_device(self, device: evdev.InputDevice) -> None:
         """Escucha eventos de un dispositivo específico en su propio thread."""
