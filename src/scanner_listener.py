@@ -145,6 +145,10 @@ class ScannerListener:
                 current_devices = [d for d in self.find_scanner_devices()]
                 current_paths = set(device.path for device in current_devices)
 
+                # --- Listas de tareas para ejecutar FUERA del lock ---
+                devices_to_add = []
+                # ----------------------------------------------------
+
                 with self.lock:
                     known_paths = set(self.device_states.keys())
 
@@ -152,11 +156,8 @@ class ScannerListener:
                     new_paths = current_paths - known_paths
                     for device in current_devices:
                         if device.path in new_paths:
-                            device_name = device.name.upper()
-                            print(f"device_name: {device_name}")
-                            print(f"🔍 Scanner detectado: {device.name} ({device.path})")
-                            self._start_device_thread(device)
-                            print(f"🆕 Scanner conectado: {device.name} ({device.path})")
+                            # No inicies el thread aquí, solo márcalo
+                            devices_to_add.append(device)
 
                     # Dispositivos desconectados
                     removed_paths = known_paths - current_paths
@@ -170,6 +171,19 @@ class ScannerListener:
                                 print(f"🧹 Terminando thread para {path}")
                                 # No se puede forzar kill, pero se elimina del registro
                         self.threads = [t for t in self.threads if t.name != f"Scanner-{path}"]
+
+                # --- FIN DEL BLOQUE 'with self.lock' ---
+
+                # --- Ahora, ejecutamos las tareas pendientes FUERA del lock ---
+                for device in devices_to_add:
+                    device_name = device.name.upper()
+                    print(f"device_name: {device_name}")
+                    print(f"🔍 Scanner detectado: {device.name} ({device.path})")
+
+                    # Esta llamada ahora es segura
+                    self._start_device_thread(device)
+
+                    print(f"🆕 Scanner conectado: {device.name} ({device.path})")
 
                 # Solo imprimir resumen si hubo cambios
                 if current_paths != previous_paths:
