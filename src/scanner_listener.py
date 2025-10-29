@@ -11,40 +11,38 @@ import threading
 
 class ScannerListener:
     """Servicio que escucha continuamente las lecturas de múltiples scanners QR."""
-
-    KEY_MAP = {
-        ecodes.KEY_1: '1', ecodes.KEY_2: '2', ecodes.KEY_3: '3', ecodes.KEY_4: '4',
-        ecodes.KEY_5: '5', ecodes.KEY_6: '6', ecodes.KEY_7: '7', ecodes.KEY_8: '8',
-        ecodes.KEY_9: '9', ecodes.KEY_0: '0',
-        ecodes.KEY_A: 'a', ecodes.KEY_B: 'b', ecodes.KEY_C: 'c', ecodes.KEY_D: 'd',
-        ecodes.KEY_E: 'e', ecodes.KEY_F: 'f', ecodes.KEY_G: 'g', ecodes.KEY_H: 'h',
-        ecodes.KEY_I: 'i', ecodes.KEY_J: 'j', ecodes.KEY_K: 'k', ecodes.KEY_L: 'l',
-        ecodes.KEY_M: 'm', ecodes.KEY_N: 'n', ecodes.KEY_O: 'o', ecodes.KEY_P: 'p',
-        ecodes.KEY_Q: 'q', ecodes.KEY_R: 'r', ecodes.KEY_S: 's', ecodes.KEY_T: 't',
-        ecodes.KEY_U: 'u', ecodes.KEY_V: 'v', ecodes.KEY_W: 'w', ecodes.KEY_X: 'x',
-        ecodes.KEY_Y: 'y', ecodes.KEY_Z: 'z',
-        ecodes.KEY_MINUS: '-', ecodes.KEY_EQUAL: '=', ecodes.KEY_LEFTBRACE: '[',
-        ecodes.KEY_RIGHTBRACE: ']', ecodes.KEY_SEMICOLON: ';', ecodes.KEY_APOSTROPHE: "'",
-        ecodes.KEY_GRAVE: '`', ecodes.KEY_BACKSLASH: '\\', ecodes.KEY_COMMA: ',',
-        ecodes.KEY_DOT: '.', ecodes.KEY_SLASH: '/', ecodes.KEY_SPACE: ' ',
+    STRING_KEY_MAP = {
+        'KEY_A': 'a', 'KEY_B': 'b', 'KEY_C': 'c', 'KEY_D': 'd',
+        'KEY_E': 'e', 'KEY_F': 'f', 'KEY_G': 'g', 'KEY_H': 'h',
+        'KEY_I': 'i', 'KEY_J': 'j', 'KEY_K': 'k', 'KEY_L': 'l',
+        'KEY_M': 'm', 'KEY_N': 'n', 'KEY_O': 'o', 'KEY_P': 'p',
+        'KEY_Q': 'q', 'KEY_R': 'r', 'KEY_S': 's', 'KEY_T': 't',
+        'KEY_U': 'u', 'KEY_V': 'v', 'KEY_W': 'w', 'KEY_X': 'x',
+        'KEY_Y': 'y', 'KEY_Z': 'z',
+        'KEY_1': '1', 'KEY_2': '2', 'KEY_3': '3', 'KEY_4': '4',
+        'KEY_5': '5', 'KEY_6': '6', 'KEY_7': '7', 'KEY_8': '8',
+        'KEY_9': '9', 'KEY_0': '0',
+        'KEY_MINUS': '-', 'KEY_EQUAL': '=', 'KEY_LEFTBRACE': '[',
+        'KEY_RIGHTBRACE': ']', 'KEY_SEMICOLON': ';', 'KEY_APOSTROPHE': "'",
+        'KEY_GRAVE': '`', 'KEY_BACKSLASH': '\\', 'KEY_COMMA': ',',
+        'KEY_DOT': '.', 'KEY_SLASH': '/', 'KEY_SPACE': ' ',
     }
 
-    # Mapeo para teclas con Shift presionado
-    SHIFT_KEY_MAP = {
-        ecodes.KEY_1: '!', ecodes.KEY_2: '@', ecodes.KEY_3: '#', ecodes.KEY_4: '$',
-        ecodes.KEY_5: '%', ecodes.KEY_6: '^', ecodes.KEY_7: '&', ecodes.KEY_8: '*',
-        ecodes.KEY_9: '(', ecodes.KEY_0: ')',
-        ecodes.KEY_A: 'A', ecodes.KEY_B: 'B', ecodes.KEY_C: 'C', ecodes.KEY_D: 'D',
-        ecodes.KEY_E: 'E', ecodes.KEY_F: 'F', ecodes.KEY_G: 'G', ecodes.KEY_H: 'H',
-        ecodes.KEY_I: 'I', ecodes.KEY_J: 'J', ecodes.KEY_K: 'K', ecodes.KEY_L: 'L',
-        ecodes.KEY_M: 'M', ecodes.KEY_N: 'N', ecodes.KEY_O: 'O', ecodes.KEY_P: 'P',
-        ecodes.KEY_Q: 'Q', ecodes.KEY_R: 'R', ecodes.KEY_S: 'S', ecodes.KEY_T: 'T',
-        ecodes.KEY_U: 'U', ecodes.KEY_V: 'V', ecodes.KEY_W: 'W', ecodes.KEY_X: 'X',
-        ecodes.KEY_Y: 'Y', ecodes.KEY_Z: 'Z',
-        ecodes.KEY_MINUS: '_', ecodes.KEY_EQUAL: '+', ecodes.KEY_LEFTBRACE: '{',
-        ecodes.KEY_RIGHTBRACE: '}', ecodes.KEY_SEMICOLON: ':', ecodes.KEY_APOSTROPHE: '"',
-        ecodes.KEY_GRAVE: '~', ecodes.KEY_BACKSLASH: '|', ecodes.KEY_COMMA: '<',
-        ecodes.KEY_DOT: '>', ecodes.KEY_SLASH: '?', ecodes.KEY_SPACE: ' ',
+    STRING_SHIFT_KEY_MAP = {
+        'KEY_A': 'A', 'KEY_B': 'B', 'KEY_C': 'C', 'KEY_D': 'D',
+        'KEY_E': 'E', 'KEY_F': 'F', 'KEY_G': 'G', 'KEY_H': 'H',
+        'KEY_I': 'I', 'KEY_J': 'J', 'KEY_K': 'K', 'KEY_L': 'L',
+        'KEY_M': 'M', 'KEY_N': 'N', 'KEY_O': 'O', 'KEY_P': 'P',
+        'KEY_Q': 'Q', 'KEY_R': 'R', 'KEY_S': 'S', 'KEY_T': 'T',
+        'KEY_U': 'U', 'KEY_V': 'V', 'KEY_W': 'W', 'KEY_X': 'X',
+        'KEY_Y': 'Y', 'KEY_Z': 'Z',
+        'KEY_1': '!', 'KEY_2': '@', 'KEY_3': '#', 'KEY_4': '$',
+        'KEY_5': '%', 'KEY_6': '^', 'KEY_7': '&', 'KEY_8': '*',
+        'KEY_9': '(', 'KEY_0': ')',
+        'KEY_MINUS': '_', 'KEY_EQUAL': '+', 'KEY_LEFTBRACE': '{',
+        'KEY_RIGHTBRACE': '}', 'KEY_SEMICOLON': ':', 'KEY_APOSTROPHE': '"',
+        'KEY_GRAVE': '~', 'KEY_BACKSLASH': '|', 'KEY_COMMA': '<',
+        'KEY_DOT': '>', 'KEY_SLASH': '?', 'KEY_SPACE': ' ',
     }
 
     def __init__(self, relay_pin: int = 17, relay_duration: float = 3.0) -> None:
@@ -224,8 +222,6 @@ class ScannerListener:
                 print(f"❌ Error en {device_name}: {e}")
 
     def _handle_key(self, device_path: str, device_name: str, keycode: str, keystate: int) -> None:
-        """Procesa una tecla presionada o liberada de un dispositivo específico."""
-        # Esta línea puede fallar si el dispositivo se desconectó justo ahora
         if device_path not in self.device_states:
             return
 
@@ -235,20 +231,14 @@ class ScannerListener:
             state['shift_pressed'] = (keystate == 1)
             return
 
-        # Solo procesar cuando la tecla es presionada (keystate = 1)
         if keystate != 1:
             return
 
-        # print(f"keycode: {keycode}") # Comenta este print, también añade latencia
-
         if keycode == 'KEY_ENTER':
-            if state['current_code']:  # Verificar si la lista no está vacía
+            if state['current_code']:
                 if not self._is_processing:
                     self._is_processing = True
-
-                    # Une la lista en una cadena solo una vez
                     data = "".join(state['current_code']).strip()
-
                     thread = threading.Thread(
                         target=self._process_qr_data_threadsafe,
                         args=(data, device_name),
@@ -257,16 +247,11 @@ class ScannerListener:
                     thread.start()
                 else:
                     print("⚠️ Escaneo ignorado: proceso anterior aún en curso.")
-
-            state['current_code'] = []  # Reinicia la lista
-
+            state['current_code'] = []
         else:
-            key_value = getattr(ecodes, keycode, None)  # Aún lento, ver parte 2
-            if key_value is not None:
-                key_map = self.SHIFT_KEY_MAP if state['shift_pressed'] else self.KEY_MAP
-                if key_value in key_map:
-                    # Añade el carácter a la lista
-                    state['current_code'].append(key_map[key_value])
+            key_map = self.STRING_SHIFT_KEY_MAP if state['shift_pressed'] else self.STRING_KEY_MAP
+            if keycode in key_map:
+                state['current_code'].append(key_map[keycode])
 
     def _process_qr_data_threadsafe(self, data: str, device_name: str):
         try:
