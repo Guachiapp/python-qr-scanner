@@ -245,7 +245,7 @@ class ScannerListener:
                     self._is_processing = True
 
                     # Une la lista en una cadena solo una vez
-                    data = "".join(state['current_code'])
+                    data = "".join(state['current_code']).strip()
 
                     thread = threading.Thread(
                         target=self._process_qr_data_threadsafe,
