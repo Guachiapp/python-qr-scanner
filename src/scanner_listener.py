@@ -122,7 +122,7 @@ class ScannerListener:
                 print(f"🔁 Reiniciando estado para {device.path}")
 
             self.device_states[device.path] = {
-                'current_code': '',
+                'current_code': [],
                 'shift_pressed': False
             }
 
