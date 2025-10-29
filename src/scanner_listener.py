@@ -109,10 +109,17 @@ class ScannerListener:
             self._shutdown()
 
     def _start_device_thread(self, device: evdev.InputDevice) -> None:
+        """Inicia el hilo de escucha para un dispositivo, validando que esté disponible."""
         with self.lock:
+            try:
+                # Verificar que el descriptor se puede abrir
+                device.capabilities()
+            except Exception as e:
+                print(f"⚠️  No se puede abrir {device.path}: {e}")
+                return
+
             if device.path in self.device_states:
-                print(f"⚠️  Ya existe estado para {device.path}, ignorando reinicio")
-                return  # Ya está registrado
+                print(f"🔁 Reiniciando estado para {device.path}")
 
             self.device_states[device.path] = {
                 'current_code': '',
@@ -158,6 +165,10 @@ class ScannerListener:
                         self.device_states.pop(path, None)
 
                         # Eliminar el thread asociado si existe
+                        for t in self.threads:
+                            if t.name == f"Scanner-{path}" and t.is_alive():
+                                print(f"🧹 Terminando thread para {path}")
+                                # No se puede forzar kill, pero se elimina del registro
                         self.threads = [t for t in self.threads if t.name != f"Scanner-{path}"]
 
                 # Solo imprimir resumen si hubo cambios
