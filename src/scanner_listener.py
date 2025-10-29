@@ -251,6 +251,8 @@ class ScannerListener:
         else:
             key_map = self.STRING_SHIFT_KEY_MAP if state['shift_pressed'] else self.STRING_KEY_MAP
             if keycode in key_map:
+                if not state['current_code']:  # Esto indica que es el primer carácter
+                    print(f"📡 Evento detectado en {device_name}. Iniciando lectura...")
                 state['current_code'].append(key_map[keycode])
 
     def _process_qr_data_threadsafe(self, data: str, device_name: str):
