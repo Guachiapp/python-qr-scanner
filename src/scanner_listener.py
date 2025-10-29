@@ -122,7 +122,7 @@ class ScannerListener:
                 print(f"🔁 Reiniciando estado para {device.path}")
 
             self.device_states[device.path] = {
-                'current_code': [],
+                'current_code': '',
                 'shift_pressed': False
             }
 
@@ -225,28 +225,22 @@ class ScannerListener:
 
     def _handle_key(self, device_path: str, device_name: str, keycode: str, keystate: int) -> None:
         """Procesa una tecla presionada o liberada de un dispositivo específico."""
-        # Esta línea puede fallar si el dispositivo se desconectó justo ahora
-        if device_path not in self.device_states:
-            return
-
         state = self.device_states[device_path]
 
-        # ... (el código de shift no cambia) ...
+        # Detectar estado de Shift
+        if keycode in ('KEY_LEFTSHIFT', 'KEY_RIGHTSHIFT'):
+            state['shift_pressed'] = (keystate == 1)
+            return
 
         # Solo procesar cuando la tecla es presionada (keystate = 1)
         if keystate != 1:
             return
-
-        # print(f"keycode: {keycode}") # Comenta este print, también añade latencia
-
+        print(f"keycode: {keycode}")
         if keycode == 'KEY_ENTER':
-            if state['current_code']:  # Verificar si la lista no está vacía
-                if not self._is_processing:
+            if state['current_code']:
+                if not self._is_processing:  # bandera para evitar procesamiento concurrente
                     self._is_processing = True
-
-                    # Une la lista en una cadena solo una vez
-                    data = "".join(state['current_code']).strip()
-
+                    data = state['current_code']
                     thread = threading.Thread(
                         target=self._process_qr_data_threadsafe,
                         args=(data, device_name),
@@ -255,16 +249,14 @@ class ScannerListener:
                     thread.start()
                 else:
                     print("⚠️ Escaneo ignorado: proceso anterior aún en curso.")
-
-            state['current_code'] = []  # Reinicia la lista
-
+                state['current_code'] = ""
         else:
-            key_value = getattr(ecodes, keycode, None)  # Aún lento, ver parte 2
+            key_value = getattr(ecodes, keycode, None)
             if key_value is not None:
+                # Usar el mapa correspondiente según el estado de Shift
                 key_map = self.SHIFT_KEY_MAP if state['shift_pressed'] else self.KEY_MAP
                 if key_value in key_map:
-                    # Añade el carácter a la lista
-                    state['current_code'].append(key_map[key_value])
+                    state['current_code'] += key_map[key_value]
 
     def _process_qr_data_threadsafe(self, data: str, device_name: str):
         try:
