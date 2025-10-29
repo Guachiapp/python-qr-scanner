@@ -111,6 +111,7 @@ class ScannerListener:
     def _start_device_thread(self, device: evdev.InputDevice) -> None:
         with self.lock:
             if device.path in self.device_states:
+                print(f"⚠️  Ya existe estado para {device.path}, ignorando reinicio")
                 return  # Ya está registrado
 
             self.device_states[device.path] = {
@@ -155,6 +156,9 @@ class ScannerListener:
                     for path in removed_paths:
                         print(f"🔌 Scanner desconectado: {path}")
                         self.device_states.pop(path, None)
+
+                        # Eliminar el thread asociado si existe
+                        self.threads = [t for t in self.threads if t.name != f"Scanner-{path}"]
 
                 # Solo imprimir resumen si hubo cambios
                 if current_paths != previous_paths:
