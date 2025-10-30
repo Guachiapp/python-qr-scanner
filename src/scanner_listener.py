@@ -45,6 +45,8 @@ class ScannerListener:
         'KEY_DOT': '>', 'KEY_SLASH': '?', 'KEY_SPACE': ' ',
     }
 
+    _printed_device_list = False
+
     def __init__(self, relay_pin: int = 17, relay_duration: float = 3.0) -> None:
         """Inicializa el servicio de escucha y configura el GPIO."""
         self.is_running: bool = False
@@ -69,10 +71,14 @@ class ScannerListener:
             devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
 
             for device in devices:
+
                 device_name = device.name.upper()
+                if not ScannerListener._printed_device_list:
+                    print(f"INIT device_name: {device_name}, path: {device.path}, phys: {device.phys})")
                 # Buscar dispositivos que contengan palabras clave de scanners
                 if any(keyword in device_name for keyword in ['SCAN', 'BARCODE', 'QR', 'READER']):
                     scanner_devices.append(device)
+            ScannerListener._printed_device_list = True
 
         except Exception as e:
             print(f"❌ Error al buscar dispositivos: {e}")
