@@ -1,3 +1,5 @@
 evdev==1.9.2
+lgpio==0.2.2.0
 PyJWT==2.10.1
+rpi-lgpio==0.6
 RPi.GPIO==0.7.1
